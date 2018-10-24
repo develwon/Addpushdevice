@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+  <script src='annyang.js'></script>
+  <script>
+  var interim_transcript = '';
+      final_transcript = '';
+      allData = {};
+
+      annyang.start({ autoRestart: false, continuous: true })
+    	var recognition = annyang.getSpeechRecognizer();
+    	var final_transcript = '';
+    	recognition.interimResults = true;
+    	recognition.onresult = function(event) {
+
+      		for (var i = event.resultIndex; i < event.results.length; ++i) {
+        			if (event.results[i].isFinal) {
+        				final_transcript += event.results[i][0].transcript;
+        				console.log("final_transcript="+final_transcript);
+        				//annyang.trigger(final_transcript); //If the sentence is "final" for the Web Speech API, we can try to trigger the sentence
+        			} else {
+        				interim_transcript += event.results[i][0].transcript;
+        				console.log("interim_transcript="+interim_transcript);
+        			}
+        		}
+      		document.getElementById('result').innerHTML =  '중간값:='+interim_transcript+'<br/>결과값='+final_transcript;
+      		console.log('interim='+interim_transcript+'|final='+final_transcript);
+          allData = { "username": interim_transcript,
+                          "message": final_transcript
+                        };
+    	};
+      // var allData = { "username": interim_transcript,
+      //                 "message": final_transcript
+      //               };
+      $(document).ready( function() {
+        $('#asdf').click( function(){
+        console.log("Test");
+        $.ajax({
+        url: "http://3d3ed7c0.ngrok.io/chatBot", // 클라이언트가 요청을 보낼 서버의 URL 주소
+        data: allData,                // HTTP 요청과 함께 서버로 보낼 데이터
+        type: "post",                             // HTTP 요청 방식(GET, POST)
+        dataType: "json"                         // 서버에서 보내줄 데이터의 타입
+        })
+    // HTTP 요청이 성공하면 요청한 데이터가 done() 메소드로 전달됨.
+        .done(function(json) {
+          console.log("test2")
+          $("<h1>").text(json.reply).appendTo("body");
+          $("<div class=\"content\">").html(json.html).appendTo("body");
+        })
+    // HTTP 요청이 실패하면 오류와 상태에 관한 정보가 fail() 메소드로 전달됨.
+        .fail(function(xhr, status, errorThrown) {
+          console.log("test3");
+          $("#text").html("오류가 발생했습니다.<br>")
+          .append("오류명: " + errorThrown + "<br>")
+          .append("상태: " + status);
+        })
+
+        // HTTP 요청이 성공하거나 실패하는 것에 상관없이 언제나 always() 메소드가 실행됨.
+        .always(function(xhr, status) {
+          console.log('test4')
+          $("#text").html("요청이 완료되었습니다!");
+        });
+      });
+    });
+  </script>
+
+</head>
+<body class="" id="grid">
+  <br/><br/>
+  한국어 음성 처리 테스트<br/><br/>
+  <div id='result'>
+  결과가 없습니다..
+  </div>
+  <input type="button" id="asdf" value="Ok"/>
+
+</body>
+</html>
